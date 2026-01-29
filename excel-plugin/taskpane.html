@@ -1,0 +1,278 @@
+<!doctype html><html><head><meta charset="UTF-8"/><meta http-equiv="X-UA-Compatible" content="IE=Edge"/><meta name="viewport" content="width=device-width,initial-scale=1"><title>Excel 截图插件</title><script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script><style>body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #0078d4;
+            border-bottom: 2px solid #0078d4;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #005a9e;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-input-label {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+            transition: background-color 0.3s;
+        }
+        .file-input-label:hover {
+            background-color: #218838;
+        }
+        .info {
+            background-color: #e7f3ff;
+            border-left: 4px solid #0078d4;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #333;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        #selectedFiles {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        /* 图片预览网格 */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        /* 功能3的小缩略图样式 */
+        #cellImagePreview {
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 6px;
+        }
+        #cellImagePreview .image-preview-item {
+            cursor: pointer;
+        }
+        #cellImagePreview .image-preview-item img {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+        #cellImagePreview .image-preview-item:hover img {
+            border-color: #0078d4;
+            transform: scale(1.05);
+        }
+        #cellImagePreview .image-name {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 45px;
+        }
+        .image-item {
+            position: relative;
+            display: inline-block;
+        }
+        .image-item img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .image-item:hover img {
+            border-color: #0078d4;
+        }
+        .image-item .delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 18px;
+            padding: 0;
+            margin: 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .image-item:hover .delete-btn {
+            opacity: 1;
+        }
+        .image-item .delete-btn:hover {
+            background: #cc0000;
+        }
+        /* 大图预览模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-image {
+            max-width: 98%;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0.8;
+        }
+        .modal-close:hover {
+            opacity: 1;
+        }
+        .modal-info {
+            color: white;
+            margin-top: 12px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 48px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0.6;
+            padding: 20px;
+        }
+        .modal-nav:hover {
+            opacity: 1;
+        }
+        .modal-nav.prev {
+            left: 10px;
+        }
+        .modal-nav.next {
+            right: 10px;
+        }
+        /* 粘贴区域样式 */
+        .paste-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+        .paste-area:hover, .paste-area.active {
+            border-color: #0078d4;
+            background: #e8f4fd;
+        }
+        .paste-area.dragover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .paste-area p {
+            margin: 0;
+            color: #666;
+            font-size: 13px;
+        }
+        .paste-area .shortcut {
+            display: inline-block;
+            background: #eee;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 0 4px;
+        }</style><script defer="defer" src="taskpane.js"></script></head><body><div class="modal-overlay" id="imageModal"><button class="modal-close" id="modalClose">×</button> <button class="modal-nav prev" id="modalPrev">‹</button> <button class="modal-nav next" id="modalNext">›</button> <img class="modal-image" id="modalImage" src="" alt="预览"><div class="modal-info" id="modalInfo"></div></div><div class="container"><h2>📸 Excel 截图与图片插件</h2><div class="section"><h3>功能一：截图嵌入</h3><div class="info">📌 使用说明：<br>1. 在Excel中选择一个单元格<br>2. 使用系统截图 <span class="shortcut">⌘+Shift+4</span> 或点击"屏幕截图"<br>3. 在下方粘贴区域按 <span class="shortcut">⌘+V</span> 粘贴<br>4. 或直接拖拽图片到粘贴区域</div><div class="paste-area" id="pasteArea"><p>📋 <strong>点击此处</strong> 激活，然后按 <span class="shortcut">⌘+V</span> 粘贴截图</p><p style="margin-top:8px;color:#999;">或直接拖拽图片文件到此处</p></div><div id="screenshotStatus"></div><div class="button-group"><button id="screenshotBtn">📷 屏幕截图</button> <button id="cancelScreenshotBtn" style="display:none;background:#f44336;">取消</button><div id="screenshotOverlay" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;cursor:crosshair;"></div></div><div id="screenshotPreview" class="image-grid"></div></div><div class="section"><h3>功能二：批量图片嵌入</h3><div class="info">📌 使用说明：<br>1. 在Excel中选择多个单元格（数量与图片数量一致）<br>2. 点击"选择图片"按钮，选择多张图片<br>3. 点击"批量嵌入"按钮<br>4. 图片将按顺序嵌入到选中的单元格<br>💡 点击下方小图可查看大图</div><div class="button-group"><label for="imageInput" class="file-input-label">📁 选择图片</label> <input type="file" id="imageInput" accept="image/*" multiple="multiple"/> <button id="batchInsertBtn" disabled="disabled">🖼️ 批量嵌入</button></div><div id="selectedFiles"></div><div id="imagePreviewGrid" class="image-grid"></div><div id="batchStatus"></div></div><div class="section"><h3>功能三：预览单元格图片</h3><div class="info">📌 使用说明：<br>1. 在Excel中选择包含图片的单元格区域<br>2. 点击"获取图片"按钮<br>3. 点击小图可查看大图</div><div class="button-group"><button id="getImagesBtn">🔍 获取图片</button> <button id="clearPreviewBtn" style="background:#888;">清空预览</button></div><div id="cellImageStatus"></div><div id="cellImagePreview" class="image-grid"></div></div></div></body></html>
