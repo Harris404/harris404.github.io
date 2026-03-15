@@ -1,0 +1,61 @@
+# Environment variables & secrets
+.env
+.env.local
+.env.production
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+!.env.template
+
+# MCP Servers (cloned repositories)
+mcp-servers/
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Wrangler / Cloudflare
+.wrangler/
+
+# Xcode user data (never commit)
+*.xcuserstate
+xcuserdata/
+*.xcworkspacedata
+
+# Large data files (should not be in git)
+*.json.bak
+healthdirect_nhsd_services_directory_2025.json
+
+# Build artifacts
+build/
+dist/
+*.tgz
+
+
+.dev.vars*
+!.env.example

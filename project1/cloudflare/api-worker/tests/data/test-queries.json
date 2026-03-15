@@ -1,0 +1,88 @@
+[
+  {
+    "query": "悉尼今天天气怎么样？",
+    "expected_agent": "life",
+    "expected_tools": ["weather"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "What's the weather in Melbourne?",
+    "expected_agent": "life",
+    "expected_tools": ["weather"],
+    "language": "en",
+    "category": "single-domain"
+  },
+  {
+    "query": "Woolworths有什么特价？",
+    "expected_agent": "life",
+    "expected_tools": ["supermarket"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "我年收入10万澳币，要交多少税？",
+    "expected_agent": "finance",
+    "expected_tools": ["tax_calculator"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "What's the current AUD to CNY exchange rate?",
+    "expected_agent": "finance",
+    "expected_tools": ["exchange_rate"],
+    "language": "en",
+    "category": "single-domain"
+  },
+  {
+    "query": "我可以申请JobSeeker吗？",
+    "expected_agent": "finance",
+    "expected_tools": ["centrelink"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "悉尼大学有哪些计算机科学课程？",
+    "expected_agent": "education",
+    "expected_tools": ["education"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "附近有GP诊所吗？",
+    "expected_agent": "healthcare",
+    "expected_tools": ["healthcare"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "Panadol是什么药？",
+    "expected_agent": "healthcare",
+    "expected_tools": ["medicine"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "墨尔本有什么好玩的景点？",
+    "expected_agent": "wellness",
+    "expected_tools": ["places"],
+    "language": "zh-CN",
+    "category": "single-domain"
+  },
+  {
+    "query": "我想租房，附近有超市和地铁吗？",
+    "expected_agent": "coordinator",
+    "expected_agents": ["finance", "life"],
+    "expected_tools": ["property", "supermarket", "transport"],
+    "language": "zh-CN",
+    "category": "cross-domain"
+  },
+  {
+    "query": "Planning a day trip to Blue Mountains - weather, transport, and attractions?",
+    "expected_agent": "coordinator",
+    "expected_agents": ["life", "wellness"],
+    "expected_tools": ["weather", "transport", "places"],
+    "language": "en",
+    "category": "cross-domain"
+  }
+]

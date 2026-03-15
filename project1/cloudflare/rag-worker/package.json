@@ -1,0 +1,11 @@
+{
+  "name": "australian-rag-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for Australian RAG search",
+  "main": "src/worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  }
+}
