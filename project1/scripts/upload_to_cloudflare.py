@@ -19,6 +19,16 @@ D1_DATABASE = "australian-rag-db"
 BATCH_SIZE = 100  # Vectorize insert batch size
 MAX_ID_LENGTH = 64  # Cloudflare Vectorize limit
 
+def wrangler_env():
+    """Build environment for wrangler subprocess calls.
+    Prefers Global API Key (CLOUDFLARE_EMAIL + CLOUDFLARE_API_KEY) over API Token.
+    Removes conflicting CF_API_TOKEN to prevent wrangler confusion."""
+    env = os.environ.copy()
+    # Remove conflicting API tokens that wrangler might auto-detect
+    for key in ['CF_API_TOKEN', 'CLOUDFLARE_API_TOKEN']:
+        env.pop(key, None)
+    return env
+
 def truncate_id(original_id: str) -> str:
     """Truncate ID to max 64 bytes, using hash suffix if needed"""
     if len(original_id.encode('utf-8')) <= MAX_ID_LENGTH:
@@ -109,7 +119,8 @@ def upload_to_vectorize(vectors):
             result = subprocess.run(
                 ['wrangler', 'vectorize', 'insert', VECTORIZE_INDEX, '--file', temp_path],
                 capture_output=True,
-                text=True
+                text=True,
+                env=wrangler_env()
             )
             
             if result.returncode != 0:
@@ -168,7 +179,8 @@ def upload_to_d1(documents):
                 ['wrangler', 'd1', 'execute', D1_DATABASE, '--remote', '--file', temp_path],
                 capture_output=True,
                 text=True,
-                input='y\n'  # Auto-confirm
+                input='y\n',  # Auto-confirm
+                env=wrangler_env()
             )
             
             if result.returncode != 0:
@@ -179,7 +191,8 @@ def upload_to_d1(documents):
                 time.sleep(3)
                 result2 = subprocess.run(
                     ['wrangler', 'd1', 'execute', D1_DATABASE, '--remote', '--file', temp_path],
-                    capture_output=True, text=True, input='y\n'
+                    capture_output=True, text=True, input='y\n',
+                    env=wrangler_env()
                 )
                 if result2.returncode == 0:
                     total_uploaded += len(batch)

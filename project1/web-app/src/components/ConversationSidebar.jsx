@@ -73,6 +73,9 @@ function ConversationSidebar({ conversations, activeId, onCreate, onSwitch, onDe
             key={conv.id}
             className={`conv-item ${conv.id === activeId ? 'active' : ''}`}
             onClick={() => handleSwitch(conv.id)}
+            role="button" tabIndex={0} aria-label={conv.title || '新对话'}
+            aria-current={conv.id === activeId ? 'true' : undefined}
+            onKeyDown={(e) => e.key === 'Enter' && handleSwitch(conv.id)}
           >
             <div className="conv-item-icon">💬</div>
             <div className="conv-item-content">
@@ -96,10 +99,10 @@ function ConversationSidebar({ conversations, activeId, onCreate, onSwitch, onDe
       {/* Mobile overlay */}
       {isOpen && <div className="sidebar-overlay" onClick={onToggle} />}
 
-      <div ref={sidebarRef} className={`conv-sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <div ref={sidebarRef} className={`conv-sidebar ${isOpen ? 'open' : 'closed'}`} role="navigation" aria-label="对话列表">
         {/* New Chat Button - full width at top */}
         <div className="sidebar-top">
-          <button className="new-chat-btn" onClick={handleNewChat}>
+          <button className="new-chat-btn" onClick={handleNewChat} aria-label="新建对话">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M14 2H6L2 6v8h12V2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
               <path d="M6 2v4H2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -107,7 +110,7 @@ function ConversationSidebar({ conversations, activeId, onCreate, onSwitch, onDe
             </svg>
             <span>新对话</span>
           </button>
-          <button className="sidebar-close-btn" onClick={onToggle} title="收起侧边栏">
+          <button className="sidebar-close-btn" onClick={onToggle} title="收起侧边栏" aria-label="收起侧边栏">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <path d="M9 3v18"/>

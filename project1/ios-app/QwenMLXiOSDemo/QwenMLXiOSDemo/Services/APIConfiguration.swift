@@ -3,7 +3,7 @@ import CoreLocation
 
 // MARK: - Cloudflare Worker 服务层
 
-private let CLOUDFLARE_WORKER_URL = "https://australian-assistant-api.paris404.workers.dev"
+private let CLOUDFLARE_WORKER_URL = "https://australian-assistant-api.wjunhao02.workers.dev"
 private let API_AUTH_TOKEN = "roo-api-2013146d1804e6c55385c60fe77c4150"
 
 /// 单一网络服务 — 所有请求通过 Cloudflare Worker 处理

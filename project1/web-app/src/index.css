@@ -139,6 +139,25 @@ nav {
 }
 .hero-stat .label { font-size: 0.35em; color: var(--poke-text-dim); margin-top: 4px; }
 
+/* Animal Parade */
+.animal-parade {
+  display: flex; justify-content: center; gap: 14px;
+  margin-bottom: 28px; flex-wrap: wrap;
+}
+.animal-card {
+  background: var(--poke-card); border: 3px solid var(--poke-border);
+  padding: 14px 18px; min-width: 90px; text-align: center;
+  box-shadow: var(--poke-shadow) var(--poke-shadow-color);
+  transition: all 0.15s; cursor: default;
+}
+.animal-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--poke-shadow-color);
+}
+.animal-emoji { font-size: 1.4em; margin-bottom: 6px; }
+.animal-name { font-size: 0.48em; font-weight: bold; color: var(--poke-text); }
+.animal-role { font-size: 0.32em; margin-top: 4px; }
+
 .try-btn {
   background: var(--poke-red); color: var(--poke-white);
   border: 4px solid var(--poke-red-dark);

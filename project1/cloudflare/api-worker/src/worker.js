@@ -160,7 +160,31 @@ function getCorsOrigin(request, env) {
 export default {
   async scheduled(event, env, ctx) {
     console.log(`[scheduled] cron fired: ${event.cron}`);
-    ctx.waitUntil(refreshSupermarketCache(env));
+
+    // Daily: supermarket cache refresh (existing)
+    if (event.cron === '0 20 * * *') {
+      ctx.waitUntil(refreshSupermarketCache(env));
+      return;
+    }
+
+    // RAG auto-updates by schedule
+    const { runScheduledUpdate } = await import('./rag-updater.js');
+
+    const cronToSchedule = {
+      '0 18 * * 0':        'weekly',     // Every Sunday: scams
+      '0 16 1 * *':        'monthly',    // 1st of month: visa, telco, finance
+      '0 14 1 1,4,7,10 *': 'quarterly',  // Jan/Apr/Jul/Oct: rental, insurance
+      '0 12 1 3 *':        'annual',     // March 1st: schools, tax, housing
+    };
+
+    const schedule = cronToSchedule[event.cron];
+    if (schedule) {
+      ctx.waitUntil(
+        runScheduledUpdate(schedule, env)
+          .then(report => console.log(`[RAG Update] ${schedule} complete:`, JSON.stringify(report).slice(0, 500)))
+          .catch(err => console.error(`[RAG Update] ${schedule} failed:`, err.message))
+      );
+    }
   },
 
   async fetch(request, env, ctx) {
@@ -229,6 +253,46 @@ export default {
         checks.google = env.GOOGLE_PLACES_API_KEY ? 'configured' : 'not configured';
 
         return json({ status: 'ok', version: API_VERSION, checks }, cors);
+      }
+
+      // --- Browser Rendering Proxy (for crawl scripts) ---
+      if (route === '/browser-render') {
+        if (request.method !== 'POST') return json({ error: 'POST only' }, cors, 405);
+        if (!verifyAuth(request, env)) return json({ error: 'Unauthorized' }, cors, 401);
+        if (!env.BROWSER) return json({ error: 'Browser Rendering not configured' }, cors, 500);
+
+        const { url: targetUrl } = await request.json();
+        if (!targetUrl) return json({ error: 'url is required' }, cors, 400);
+
+        try {
+          const puppeteer = await import('@cloudflare/puppeteer');
+          const browser = await puppeteer.default.launch(env.BROWSER);
+          const page = await browser.newPage();
+          await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+
+          // Extract text content and title
+          const title = await page.title();
+          const content = await page.evaluate(() => {
+            // Remove nav, header, footer, script, style
+            for (const el of document.querySelectorAll('nav, header, footer, script, style, [role="navigation"], .cookie-banner, #cookie-banner')) {
+              el.remove();
+            }
+            return document.body?.innerText || '';
+          });
+
+          await browser.close();
+
+          return json({
+            success: true,
+            result: {
+              url: targetUrl,
+              title,
+              markdown: content,
+            }
+          }, cors);
+        } catch (err) {
+          return json({ success: false, error: err.message }, cors, 500);
+        }
       }
 
       // --- Chat endpoints ---
@@ -429,6 +493,21 @@ export default {
       }
       if (!(await checkRateLimit(env.KV, clientIP, 'auth'))) {
         return json({ error: 'Too many requests.' }, cors, 429);
+      }
+
+      // RAG auto-update status & manual trigger
+      if (route === '/rag/status') {
+        const { getUpdateStatus } = await import('./rag-updater.js');
+        const status = await getUpdateStatus(env);
+        return json({ status, timestamp: new Date().toISOString() }, cors);
+      }
+
+      if (route === '/rag/trigger' && request.method === 'POST') {
+        const { category } = await request.json();
+        if (!category) return json({ error: 'category required (e.g. "scams", "rental")' }, cors, 400);
+        const { triggerCategoryUpdate } = await import('./rag-updater.js');
+        const result = await triggerCategoryUpdate(category, env);
+        return json({ result, timestamp: new Date().toISOString() }, cors);
       }
 
       if (route === '/rag/search') {

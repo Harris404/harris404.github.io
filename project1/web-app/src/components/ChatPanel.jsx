@@ -132,16 +132,18 @@ export default function ChatPanel({ activeConv, activeId, addMessage, getContext
       </div>
 
       {/* Quick Asks */}
-      <div className="quick-asks">
+      <div className="quick-asks" role="toolbar" aria-label="快速提问">
         {QUICK_ASKS.map((q, i) => (
-          <div key={i} className="quick-ask" onClick={() => sendMessage(q.text)}>
+          <div key={i} className="quick-ask" onClick={() => sendMessage(q.text)}
+            role="button" tabIndex={0} aria-label={q.label}
+            onKeyDown={(e) => e.key === 'Enter' && sendMessage(q.text)}>
             {q.emoji} {q.label}
           </div>
         ))}
       </div>
 
       {/* Messages */}
-      <div className="chat-messages" ref={messagesRef}>
+      <div className="chat-messages" ref={messagesRef} role="log" aria-live="polite" aria-label="对话消息">
         {activeConv?.messages.map((msg, i) => (
           <MessageBubble key={i} role={msg.role} content={msg.content} />
         ))}
@@ -172,6 +174,7 @@ export default function ChatPanel({ activeConv, activeId, addMessage, getContext
           className={`img-btn ${pendingImage ? 'has-image' : ''}`}
           onClick={() => fileRef.current?.click()}
           title="上传图片"
+          aria-label="上传图片"
         >
           📷
         </button>
@@ -181,6 +184,7 @@ export default function ChatPanel({ activeConv, activeId, addMessage, getContext
           accept="image/jpeg,image/png,image/webp"
           style={{ display: 'none' }}
           onChange={handleImageUpload}
+          aria-label="选择图片文件"
         />
         <textarea
           className="chat-input"
@@ -190,9 +194,10 @@ export default function ChatPanel({ activeConv, activeId, addMessage, getContext
           value={inputText}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          aria-label="输入消息"
         />
         {isStreaming ? (
-          <button className="stop-btn" onClick={stopGenerating} title="停止生成">
+          <button className="stop-btn" onClick={stopGenerating} title="停止生成" aria-label="停止生成">
             ⏹
           </button>
         ) : (
@@ -200,6 +205,7 @@ export default function ChatPanel({ activeConv, activeId, addMessage, getContext
             className="send-btn"
             onClick={() => sendMessage()}
             disabled={!inputText.trim()}
+            aria-label="发送消息"
           >
             ➤
           </button>

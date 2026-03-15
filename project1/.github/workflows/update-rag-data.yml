@@ -2,14 +2,24 @@ name: Update RAG Data
 
 on:
   schedule:
-    # 每月1号 UTC 02:00 自动运行
-    - cron: '0 2 1 * *'
+    # 每月1号和15号 UTC 16:00 (AEST 02:00) 自动运行
+    - cron: '0 16 1,15 * *'
   workflow_dispatch:
     inputs:
-      skip_upload:
-        description: '仅爬取和处理数据，跳过上传到 Cloudflare'
+      topic:
+        description: '只爬取特定主题 (如 tax, visa, scams)，留空=全部'
         required: false
-        default: 'false'
+        default: ''
+        type: string
+      force:
+        description: '强制重新爬取已存在的页面'
+        required: false
+        default: false
+        type: boolean
+      skip_upload:
+        description: '仅爬取+处理，跳过上传到 Cloudflare'
+        required: false
+        default: false
         type: boolean
 
 permissions:
@@ -18,11 +28,16 @@ permissions:
 jobs:
   update-rag:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,34 +45,65 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
+        run: pip install requests beautifulsoup4 sentence-transformers numpy
+
+      - name: Install Playwright (for anti-crawl sites)
+        run: npx playwright install --with-deps chromium
+
+      # ── Phase 1: 全量爬取 (CF Browser Rendering + Playwright) ──
+      - name: Crawl all RAG data sources
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          pip install requests beautifulsoup4 sentence-transformers numpy
+          ARGS=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
+          if [ -n "${{ github.event.inputs.topic }}" ]; then
+            ARGS="$ARGS --topic ${{ github.event.inputs.topic }}"
+          fi
+          echo "Running: node scripts/crawl-rag-data.mjs $ARGS"
+          node scripts/crawl-rag-data.mjs $ARGS
 
-      - name: Scrape government documentation
-        run: python scripts/scrape-gov-docs.py
-
+      # ── Phase 2: 处理 → chunks ──
       - name: Prepare RAG chunks
         run: python scripts/prepare_rag_data.py
 
+      # ── Phase 3: 生成 embeddings ──
       - name: Generate embeddings
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: python scripts/generate_embeddings.py
+
+      # ── Phase 4: 上传到 Cloudflare D1 + Vectorize ──
+      - name: Install Wrangler
+        if: ${{ github.event.inputs.skip_upload != 'true' }}
+        run: npm install -g wrangler
 
       - name: Upload to Cloudflare
         if: ${{ github.event.inputs.skip_upload != 'true' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
         run: python scripts/upload_to_cloudflare.py
 
+      # ── Phase 5: 提交数据变更 ──
       - name: Commit updated data files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/rag-sources/ data/processed/rag_chunks.jsonl data/processed/*_stats.json
           if git diff --cached --quiet; then
-            echo "No data changes detected."
+            echo "✓ No data changes detected."
           else
-            git commit -m "chore: auto-update RAG data $(date +%Y-%m-%d)"
+            TOPIC_TAG=""
+            if [ -n "${{ github.event.inputs.topic }}" ]; then
+              TOPIC_TAG=" [${{ github.event.inputs.topic }}]"
+            fi
+            git commit -m "chore: auto-update RAG data${TOPIC_TAG} $(date +%Y-%m-%d)"
             git push
           fi

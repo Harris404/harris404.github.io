@@ -227,21 +227,30 @@ struct StreamingStatusView: View {
 struct AgentBadge: View {
     let agent: String
     
-    private var display: (emoji: String, label: String, color: Color) {
+    private var display: (emoji: String, name: String, label: String, color: Color) {
         switch agent {
-        case "life": return ("🏠", "生活", .pokeBlue)
-        case "finance": return ("💰", "财务", .pokeYellowDark)
-        case "education": return ("🎓", "教育", .pokePurple)
-        case "healthcare": return ("🏥", "医疗", .pokeGreen)
-        case "wellness": return ("🌿", "休闲", .pokeGreenDark)
-        default: return ("🤖", agent, .pokeFire)
+        case "life": return ("🐦", "Kookie", "生活", .pokeBlue)
+        case "finance": return ("🦆", "Platty", "财务", .pokeBlueDark)
+        case "education": return ("🐨", "Koko", "教育", .pokePurple)
+        case "healthcare": return ("🦎", "Spike", "医疗", .pokeGreen)
+        case "wellness": return ("🐹", "Quokka", "休闲", .pokeFire)
+        default: return ("🤖", "", agent, .pokeFire)
         }
     }
     
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 3) {
             Text(display.emoji)
                 .font(.caption2)
+            if !display.name.isEmpty {
+                Text(display.name)
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(display.color)
+                Text("·")
+                    .font(.caption2)
+                    .foregroundColor(display.color.opacity(0.5))
+            }
             Text(display.label)
                 .font(.caption2)
                 .foregroundColor(display.color)
